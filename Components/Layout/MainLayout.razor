@@ -1,0 +1,31 @@
+@inherits LayoutComponentBase
+
+<div class="app-wrapper">
+    <NavMenu />
+    <main class="tama-main">
+        @Body
+    </main>
+</div>
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        background: #050f08;
+        background-image:
+            radial-gradient(ellipse at top, #0d2a12 0%, #050f08 60%);
+        color: #eee;
+        min-height: 100vh;
+    }
+
+    .app-wrapper { min-height: 100vh; }
+
+    .tama-main {
+        padding: 2rem;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+</style>

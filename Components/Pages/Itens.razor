@@ -1,0 +1,250 @@
+@page "/itens"
+@rendermode InteractiveServer
+@inject PokeService PokeService
+@inject GameState GameState
+
+<div class="tama-page">
+    <div class="tama-header">
+        <span class="pixel-text">🎒 ITENS</span>
+    </div>
+
+    @if (carregando)
+    {
+        <div class="tama-loading">
+            <div class="loading-dots">
+                <span></span><span></span><span></span>
+            </div>
+            <p class="pixel-text small">Carregando itens...</p>
+        </div>
+    }
+    else
+    {
+        <div class="tama-itens-grid">
+            @foreach (var item in itens)
+            {
+                var efeito = item.EffectEntries?
+                    .FirstOrDefault(e => e.Language?.Name == "en")?
+                    .ShortEffect ?? "Sem descrição";
+
+                <div class="tama-item-card">
+                    <div class="item-icon">@ItemEmoji(item.Name)</div>
+                    <div class="pixel-text small">@item.Name.ToUpper()</div>
+                    <div class="item-custo">💰 @item.Cost coins</div>
+                    <div class="item-efeito">@efeito</div>
+
+                    @if (!GameState.MascotesAdotados.Any())
+                    {
+                        <p class="sem-mascote">Adote um mascote primeiro!</p>
+                    }
+                    else
+                    {
+                        <div class="item-mascotes">
+                            <div class="pixel-text small">Usar em:</div>
+                            <div class="mascotes-row">
+                                @foreach (var mascote in GameState.MascotesAdotados)
+                                {
+                                    var itemCapturado    = item;
+                                    var mascoteCapturado = mascote;
+                                    <button class="btn-usar"
+                                            @onclick="() => UsarItem(itemCapturado, mascoteCapturado)">
+                                        @if (!string.IsNullOrEmpty(mascote.SpriteUrl))
+                                        {
+                                            <img src="@mascote.SpriteUrl" alt="@mascote.Nome" />
+                                        }
+                                        <span>@mascote.Nome</span>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(mensagem))
+{
+    <div class="tama-toast">@mensagem</div>
+}
+
+@code {
+    private List<Item> itens = new();
+    private bool   carregando = true;
+    private string mensagem   = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        itens      = await PokeService.BuscarTodosItensAsync();
+        carregando = false;
+    }
+
+    private async Task UsarItem(Item item, MascoteVivo mascote)
+    {
+        mascote.UsarItem(2);
+        mensagem = $"✨ {item.Name} usado em {mascote.Nome}!";
+        StateHasChanged();
+        await Task.Delay(2500);
+        mensagem = "";
+        StateHasChanged();
+    }
+
+    private string ItemEmoji(string nome) => nome switch
+    {
+        "potion"       => "🧪",
+        "super-potion" => "💉",
+        "antidote"     => "🟢",
+        "fresh-water"  => "💧",
+        _              => "🎁"
+    };
+}
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    .tama-page   { max-width: 900px; margin: 0 auto; padding: 1rem; }
+    .tama-header { margin-bottom: 1.5rem; }
+
+    .pixel-text {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.75rem;
+        color: #4ade80;
+        text-shadow: 0 0 8px rgba(74,222,128,0.5);
+    }
+
+    .pixel-text.small { font-size: 0.5rem; }
+
+    /* ── LOADING ── */
+    .tama-loading { text-align: center; padding: 4rem; }
+
+    .loading-dots {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .loading-dots span {
+        width: 12px; height: 12px;
+        background: #4ade80;
+        border-radius: 50%;
+        animation: dot-bounce 1.2s ease-in-out infinite;
+    }
+
+    .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @@keyframes dot-bounce {
+        0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+        40%            { transform: scale(1);   opacity: 1; }
+    }
+
+    /* ── GRID ── */
+    .tama-itens-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1rem;
+    }
+
+    /* ── CARD DE ITEM ── */
+    .tama-item-card {
+        background: #0d1f12;
+        border: 2px solid #1a3a22;
+        border-radius: 16px;
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        transition: all 0.2s;
+    }
+
+    .tama-item-card:hover {
+        border-color: #4ade80;
+        box-shadow: 0 0 15px rgba(74,222,128,0.15);
+    }
+
+    .item-icon { font-size: 2.5rem; text-align: center; }
+
+    .item-custo {
+        font-size: 0.75rem;
+        color: #fbbf24;
+    }
+
+    .item-efeito {
+        font-size: 0.72rem;
+        color: #86efac;
+        line-height: 1.5;
+        border-top: 1px solid #1a3a22;
+        padding-top: 0.5rem;
+    }
+
+    .sem-mascote {
+        font-size: 0.7rem;
+        color: #666;
+        text-align: center;
+        margin-top: 0.5rem;
+    }
+
+    /* ── MASCOTES DO ITEM ── */
+    .item-mascotes { margin-top: 0.25rem; }
+
+    .mascotes-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-top: 0.4rem;
+    }
+
+    .btn-usar {
+        background: #0a2a12;
+        border: 2px solid #2a6a3a;
+        border-radius: 8px;
+        padding: 0.4rem 0.6rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        transition: all 0.15s;
+    }
+
+    .btn-usar img {
+        width: 28px; height: 28px;
+        image-rendering: pixelated;
+    }
+
+    .btn-usar span {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.35rem;
+        color: #86efac;
+    }
+
+    .btn-usar:hover {
+        background: #e94560;
+        border-color: #e94560;
+        transform: scale(1.05);
+    }
+
+    .btn-usar:hover span { color: #fff; }
+
+    /* ── TOAST ── */
+    .tama-toast {
+        position: fixed;
+        bottom: 2rem; left: 50%;
+        transform: translateX(-50%);
+        background: #0d1f12;
+        border: 2px solid #4ade80;
+        color: #4ade80;
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 0 20px rgba(74,222,128,0.4);
+        z-index: 999;
+        animation: slide-up 0.3s ease;
+    }
+
+    @@keyframes slide-up {
+        from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+        to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
+    }
+</style>

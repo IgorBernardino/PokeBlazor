@@ -1,0 +1,357 @@
+@page "/meus-mascotes"
+@rendermode InteractiveServer
+@inject GameState GameState
+
+<div class="tama-page">
+    <div class="tama-header">
+        <span class="pixel-text">💗 MEUS POKEMONS</span>
+    </div>
+
+    @if (!GameState.MascotesAdotados.Any())
+    {
+        <div class="tama-vazio">
+            <div class="vazio-icon">🥚</div>
+            <p class="pixel-text small">Nenhum pokemon ainda!</p>
+            <a href="/adocao" class="btn-adotar-link">escolher agora</a>
+        </div>
+    }
+    else
+    {
+        <div class="tama-mascotes-grid">
+            @foreach (var mascote in GameState.MascotesAdotados)
+            {
+                <div class="tama-mascote-card @(mascote.EstaCritico() ? "critico" : "")">
+
+                    <!-- TELA DO BICHINHO -->
+                    <div class="tama-mini-screen">
+                        @if (!string.IsNullOrEmpty(mascote.SpriteUrl))
+                        {
+                            <img src="@mascote.SpriteUrl"
+                                 alt="@mascote.Especie"
+                                 class="mascote-sprite @(HumorAnimacao(mascote.Humor))" />
+                        }
+                        <div class="mascote-emote">@HumorEmoji(mascote.Humor)</div>
+                    </div>
+
+                    <!-- NOME E ESPÉCIE -->
+                    <div class="mascote-identity">
+                        <div class="pixel-text small">@mascote.Nome.ToUpper()</div>
+                        <div class="especie-label">@mascote.Especie</div>
+                    </div>
+
+                    @if (mascote.EstaCritico())
+                    {
+                        <div class="critico-badge">⚠️ CUIDADOS!</div>
+                    }
+
+                    <!-- BARRAS DE STATUS -->
+                    <div class="tama-status">
+                        <div class="stat-line">
+                            <span class="stat-icon">🍖</span>
+                            <div class="tama-barra">
+                                <div class="tama-fill @CorBarra(mascote.Alimentacao)"
+                                     style="width:@(mascote.Alimentacao * 10)%"></div>
+                            </div>
+                            <span class="stat-val">@mascote.Alimentacao</span>
+                        </div>
+                        <div class="stat-line">
+                            <span class="stat-icon">😄</span>
+                            <div class="tama-barra">
+                                <div class="tama-fill @CorBarra(mascote.Humor)"
+                                     style="width:@(mascote.Humor * 10)%"></div>
+                            </div>
+                            <span class="stat-val">@mascote.Humor</span>
+                        </div>
+                        <div class="stat-line">
+                            <span class="stat-icon">⚡</span>
+                            <div class="tama-barra">
+                                <div class="tama-fill @CorBarra(mascote.Energia)"
+                                     style="width:@(mascote.Energia * 10)%"></div>
+                            </div>
+                            <span class="stat-val">@mascote.Energia</span>
+                        </div>
+                        <div class="stat-line">
+                            <span class="stat-icon">💊</span>
+                            <div class="tama-barra">
+                                <div class="tama-fill @CorBarra(mascote.Saude)"
+                                     style="width:@(mascote.Saude * 10)%"></div>
+                            </div>
+                            <span class="stat-val">@mascote.Saude</span>
+                        </div>
+                    </div>
+
+                    <!-- BOTÕES DE AÇÃO -->
+                    <div class="tama-acoes">
+                        <button class="tama-acao-btn" @onclick="() => mascote.Alimentar()" title="Alimentar">
+                            🍖
+                            <span>Comer</span>
+                        </button>
+                        <button class="tama-acao-btn" @onclick="() => mascote.Brincar()" title="Brincar">
+                            🎾
+                            <span>Brincar</span>
+                        </button>
+                        <button class="tama-acao-btn" @onclick="() => mascote.Dormir()" title="Dormir">
+                            😴
+                            <span>Dormir</span>
+                        </button>
+                        <button class="tama-acao-btn" @onclick="() => mascote.Medicar()" title="Medicar">
+                            💊
+                            <span>Medicar</span>
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private string CorBarra(int valor) => valor switch
+    {
+        >= 8 => "verde",
+        >= 5 => "amarelo",
+        >= 3 => "laranja",
+        _    => "vermelho"
+    };
+
+    private string HumorEmoji(int humor) => humor switch
+    {
+        >= 8 => "😄",
+        >= 5 => "🙂",
+        >= 3 => "😟",
+        _    => "😢"
+    };
+
+    private string HumorAnimacao(int humor) => humor switch
+    {
+        >= 8 => "sprite-feliz",
+        >= 3 => "sprite-normal",
+        _    => "sprite-triste"
+    };
+}
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    .tama-page    { max-width: 1000px; margin: 0 auto; padding: 1rem; }
+    .tama-header  { margin-bottom: 1.5rem; }
+
+    .pixel-text {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.75rem;
+        color: #4ade80;
+        text-shadow: 0 0 8px rgba(74,222,128,0.5);
+    }
+
+    .pixel-text.small { font-size: 0.5rem; }
+
+    /* ── VAZIO ── */
+    .tama-vazio {
+        text-align: center;
+        padding: 4rem;
+        background: #0d1f12;
+        border: 2px dashed #2a6a3a;
+        border-radius: 16px;
+    }
+
+    .vazio-icon { font-size: 4rem; margin-bottom: 1rem; }
+
+    .btn-adotar-link {
+        display: inline-block;
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.5rem;
+        background: #e94560;
+        color: #fff;
+        text-decoration: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+        box-shadow: 0 4px 0 #a0293f;
+    }
+
+    /* ── GRID ── */
+    .tama-mascotes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    /* ── CARD DO MASCOTE ── */
+    .tama-mascote-card {
+        background: #0d1f12;
+        border: 3px solid #1a3a22;
+        border-radius: 20px;
+        padding: 1.25rem;
+        transition: all 0.2s;
+        position: relative;
+    }
+
+    .tama-mascote-card:hover {
+        border-color: #4ade80;
+        box-shadow: 0 0 20px rgba(74,222,128,0.2);
+    }
+
+    .tama-mascote-card.critico {
+        border-color: #e94560;
+        box-shadow: 0 0 15px rgba(233,69,96,0.3);
+        animation: pulse-red 2s ease-in-out infinite;
+    }
+
+    @@keyframes pulse-red {
+        0%, 100% { box-shadow: 0 0 15px rgba(233,69,96,0.3); }
+        50%       { box-shadow: 0 0 30px rgba(233,69,96,0.6); }
+    }
+
+    /* ── MINI TELA ── */
+    .tama-mini-screen {
+        background: #050f08;
+        border-radius: 12px;
+        border: 2px solid #1a3a22;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        margin-bottom: 0.75rem;
+        overflow: hidden;
+    }
+
+    .mascote-sprite {
+        width: 80px; height: 80px;
+        image-rendering: pixelated;
+    }
+
+    .sprite-feliz { animation: sprite-bounce 0.8s ease-in-out infinite alternate; }
+    .sprite-normal { animation: float-slow 3s ease-in-out infinite; }
+    .sprite-triste { animation: sprite-shake 2s ease-in-out infinite; filter: grayscale(30%); }
+
+    @@keyframes sprite-bounce {
+        from { transform: translateY(0) scale(1); }
+        to   { transform: translateY(-8px) scale(1.05); }
+    }
+
+    @@keyframes float-slow {
+        0%, 100% { transform: translateY(0); }
+        50%       { transform: translateY(-4px); }
+    }
+
+    @@keyframes sprite-shake {
+        0%, 100% { transform: translateX(0); }
+        25%       { transform: translateX(-3px); }
+        75%       { transform: translateX(3px); }
+    }
+
+    .mascote-emote {
+        position: absolute;
+        top: 6px; right: 8px;
+        font-size: 1.2rem;
+    }
+
+    /* ── IDENTIDADE ── */
+    .mascote-identity {
+        text-align: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .especie-label {
+        font-size: 0.75rem;
+        color: #86efac;
+        margin-top: 0.2rem;
+        text-transform: capitalize;
+    }
+
+    .critico-badge {
+        position: absolute;
+        top: -10px; right: 12px;
+        background: #e94560;
+        color: #fff;
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.35rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 20px;
+        animation: blink 1s step-end infinite;
+    }
+
+    @@keyframes blink {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0; }
+    }
+
+    /* ── STATUS ── */
+    .tama-status { margin-bottom: 1rem; }
+
+    .stat-line {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .stat-icon { font-size: 0.8rem; width: 20px; text-align: center; }
+
+    .tama-barra {
+        flex: 1;
+        height: 8px;
+        background: #0a2a12;
+        border-radius: 4px;
+        overflow: hidden;
+        border: 1px solid #1a3a22;
+    }
+
+    .tama-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+
+    .verde    { background: #4ade80; box-shadow: 0 0 6px rgba(74,222,128,0.5); }
+    .amarelo  { background: #fbbf24; box-shadow: 0 0 6px rgba(251,191,36,0.5); }
+    .laranja  { background: #f97316; box-shadow: 0 0 6px rgba(249,115,22,0.5); }
+    .vermelho { background: #e94560; box-shadow: 0 0 6px rgba(233,69,96,0.5); }
+
+    .stat-val {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.4rem;
+        color: #4ade80;
+        width: 16px;
+        text-align: right;
+    }
+
+    /* ── AÇÕES ── */
+    .tama-acoes {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.4rem;
+    }
+
+    .tama-acao-btn {
+        background: #0a2a12;
+        border: 2px solid #2a6a3a;
+        border-radius: 8px;
+        padding: 0.5rem 0.25rem;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.2rem;
+        transition: all 0.15s;
+        font-size: 1.2rem;
+    }
+
+    .tama-acao-btn span {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.3rem;
+        color: #86efac;
+    }
+
+    .tama-acao-btn:hover {
+        background: #e94560;
+        border-color: #e94560;
+        transform: scale(1.08);
+        box-shadow: 0 0 10px rgba(233,69,96,0.4);
+    }
+
+    .tama-acao-btn:hover span { color: #fff; }
+
+    .tama-acao-btn:active { transform: scale(0.95); }
+</style>

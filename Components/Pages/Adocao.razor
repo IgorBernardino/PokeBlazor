@@ -1,0 +1,374 @@
+@page "/adocao"
+@rendermode InteractiveServer
+@inject PokeService PokeService
+@inject GameState GameState
+@inject NavigationManager Nav
+
+<div class="tama-page">
+    <div class="tama-header">
+        <span class="pixel-text">🥚 ESCOLHA SEU PARCEIRO</span>
+        <button class="btn-ressortear" @onclick="Ressortear" disabled="@carregandoSorteio">
+            @(carregandoSorteio ? "⏳" : "🎲 Sortear novos")
+        </button>
+    </div>
+
+    @if (carregando)
+    {
+        <div class="tama-loading">
+            <div class="loading-dots">
+                <span></span><span></span><span></span>
+            </div>
+            <p class="pixel-text small">Buscando Pokémons...</p>
+        </div>
+    }
+    else
+    {
+        <div class="tama-escolha-grid">
+            @foreach (var especie in GameState.PokemonsSorteados)
+            {
+                var dados = mascotesCarregados.ContainsKey(especie)
+                    ? mascotesCarregados[especie] : null;
+
+                <div class="tama-card-escolha @(especieSelecionada == especie ? "selecionado" : "")"
+                     @onclick="() => SelecionarEspecie(especie)">
+
+                    <div class="card-sprite-area">
+                        @if (dados?.Sprites?.FrontDefault != null)
+                        {
+                            <img src="@dados.Sprites.FrontDefault"
+                                 alt="@especie"
+                                 class="card-sprite @(especieSelecionada == especie ? "bounce" : "")" />
+                        }
+                        else
+                        {
+                            <div class="sem-sprite">?</div>
+                        }
+                    </div>
+
+                    <div class="card-info">
+                        <h3 class="pixel-text small">@especie.ToUpper()</h3>
+                        @if (dados != null)
+                        {
+                            <div class="card-stats">
+                                <span>📏 @(dados.Height * 10)cm</span>
+                                <span>⚖️ @(dados.Weight * 100)g</span>
+                                <span>⭐ @dados.BaseExperience xp</span>
+                            </div>
+                            <div class="card-types">
+                                @foreach (var slot in dados.Abilities.Take(2))
+                                {
+                                    <span class="tipo-badge">@slot.Ability.Name</span>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    @if (especieSelecionada == especie)
+                    {
+                        <div class="selecionado-badge">✓ SELECIONADO</div>
+                    }
+                </div>
+            }
+        </div>
+
+        @if (especieSelecionada != null)
+        {
+            <div class="tama-adotar-panel">
+                <div class="pixel-text small">Dar um nome para @especieSelecionada.ToUpper():</div>
+                <div class="nome-input-row">
+                    <input @bind="nomeEscolhido"
+                           @bind:event="oninput"
+                           placeholder="Nome do seu mascote..."
+                           class="tama-input" />
+                    <button class="btn-adotar"
+                            @onclick="Adotar"
+                            disabled="@string.IsNullOrWhiteSpace(nomeEscolhido)">
+                        ❤️ Escolher
+                    </button>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private Dictionary<string, Mascote> mascotesCarregados = new();
+    private bool    carregando         = true;
+    private bool    carregandoSorteio  = false;
+    private string? especieSelecionada = null;
+    private string  nomeEscolhido      = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarSorteados();
+    }
+
+    private async Task CarregarSorteados()
+    {
+        carregando = true;
+        mascotesCarregados.Clear();
+
+        foreach (var especie in GameState.PokemonsSorteados)
+        {
+            var mascote = await PokeService.BuscarMascoteAsync(especie);
+            if (mascote != null)
+                mascotesCarregados[especie] = mascote;
+        }
+        carregando = false;
+    }
+
+    private void SelecionarEspecie(string especie)
+    {
+        especieSelecionada = especie;
+        nomeEscolhido      = "";
+    }
+
+    private void Adotar()
+    {
+        if (string.IsNullOrWhiteSpace(nomeEscolhido) || especieSelecionada == null) return;
+        var sprite = mascotesCarregados.ContainsKey(especieSelecionada)
+            ? mascotesCarregados[especieSelecionada]?.Sprites?.FrontDefault ?? ""
+            : "";
+        GameState.AdotarMascote(especieSelecionada, nomeEscolhido, sprite);
+        Nav.NavigateTo("/meus-mascotes");
+    }
+
+    private async Task Ressortear()
+    {
+        carregandoSorteio  = true;
+        especieSelecionada = null;
+        StateHasChanged();
+
+        var sorteados = await PokeService.SortearPokemonsAsync(3);
+        GameState.DefinirSorteio(sorteados);
+        await CarregarSorteados();
+        carregandoSorteio = false;
+    }
+}
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    .tama-page { max-width: 900px; margin: 0 auto; padding: 1rem; }
+
+    .tama-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .pixel-text {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.75rem;
+        color: #4ade80;
+        text-shadow: 0 0 8px rgba(74,222,128,0.5);
+    }
+
+    .pixel-text.small { font-size: 0.55rem; }
+
+    .btn-ressortear {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.45rem;
+        background: #0f3460;
+        color: #4ade80;
+        border: 2px solid #4ade80;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-ressortear:hover:not(:disabled) {
+        background: #4ade80;
+        color: #0d1f12;
+    }
+
+    .btn-ressortear:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── LOADING ── */
+    .tama-loading {
+        text-align: center;
+        padding: 4rem;
+    }
+
+    .loading-dots {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .loading-dots span {
+        width: 12px; height: 12px;
+        background: #4ade80;
+        border-radius: 50%;
+        animation: dot-bounce 1.2s ease-in-out infinite;
+    }
+
+    .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @@keyframes dot-bounce {
+        0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+        40%            { transform: scale(1);   opacity: 1; }
+    }
+
+    /* ── GRID DE ESCOLHA ── */
+    .tama-escolha-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    @@media (max-width: 600px) {
+        .tama-escolha-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── CARD ── */
+    .tama-card-escolha {
+        background: #0d1f12;
+        border: 3px solid #1a3a22;
+        border-radius: 16px;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.25s;
+        position: relative;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .tama-card-escolha:hover {
+        border-color: #4ade80;
+        transform: translateY(-6px);
+        box-shadow: 0 8px 30px rgba(74,222,128,0.2);
+    }
+
+    .tama-card-escolha.selecionado {
+        border-color: #e94560;
+        background: #1a0d12;
+        box-shadow: 0 0 20px rgba(233,69,96,0.4);
+    }
+
+    .card-sprite-area {
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .card-sprite {
+        width: 96px; height: 96px;
+        image-rendering: pixelated;
+        filter: drop-shadow(0 0 6px rgba(74,222,128,0.4));
+        transition: transform 0.2s;
+    }
+
+    .card-sprite.bounce { animation: bounce 0.6s ease infinite alternate; }
+
+    @@keyframes bounce {
+        from { transform: translateY(0); }
+        to   { transform: translateY(-8px); }
+    }
+
+    .sem-sprite {
+        width: 96px; height: 96px;
+        background: #1a3a22;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2rem;
+    }
+
+    .card-info h3 { margin-bottom: 0.5rem; }
+
+    .card-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        font-size: 0.75rem;
+        color: #86efac;
+        margin: 0.5rem 0;
+    }
+
+    .card-types {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.3rem;
+        margin-top: 0.5rem;
+    }
+
+    .tipo-badge {
+        background: #0a2a12;
+        border: 1px solid #2a6a3a;
+        border-radius: 4px;
+        padding: 0.2rem 0.4rem;
+        font-size: 0.6rem;
+        color: #86efac;
+    }
+
+    .selecionado-badge {
+        position: absolute;
+        top: -10px; left: 50%;
+        transform: translateX(-50%);
+        background: #e94560;
+        color: #fff;
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.4rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        white-space: nowrap;
+    }
+
+    /* ── PAINEL DE ADOÇÃO ── */
+    .tama-adotar-panel {
+        background: #0d1f12;
+        border: 2px solid #4ade80;
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: 0 0 20px rgba(74,222,128,0.15);
+    }
+
+    .nome-input-row {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+    }
+
+    .tama-input {
+        flex: 1;
+        background: #0a1a0d;
+        border: 2px solid #4ade80;
+        border-radius: 6px;
+        padding: 0.6rem 0.75rem;
+        color: #4ade80;
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.5rem;
+        outline: none;
+    }
+
+    .tama-input:focus { box-shadow: 0 0 8px rgba(74,222,128,0.5); }
+
+    .btn-adotar {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.5rem;
+        background: #e94560;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.6rem 1.25rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 3px 0 #a0293f;
+        white-space: nowrap;
+    }
+
+    .btn-adotar:hover:not(:disabled) {
+        background: #ff6b81;
+        transform: translateY(-2px);
+    }
+
+    .btn-adotar:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>

@@ -1,0 +1,333 @@
+@page "/"
+@rendermode InteractiveServer
+@inject GameState GameState
+@inject PokeService PokeService
+@inject NavigationManager Nav
+
+<div class="tama-container">
+
+    @if (!GameState.JogoIniciado)
+    {
+        <div class="tama-device">
+            <div class="tama-screen">
+                <div class="screen-content">
+                    <div class="pixel-title">POKETAMA</div>
+                    <div class="tama-mascot">
+                        <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png"
+                             alt="pikachu" class="tama-img-welcome" />
+                    </div>
+                    <p class="tama-text">Bem-vindo, treinador!</p>
+
+                    <div class="tama-input-area">
+                        <label>Seu nome:</label>
+                        <input @bind="nomeDigitado"
+                               @bind:event="oninput"
+                               placeholder="Digite aqui..."
+                               class="tama-input" />
+                    </div>
+
+                    <button class="tama-btn-start"
+                            @onclick="IniciarJogo"
+                            disabled="@(string.IsNullOrWhiteSpace(nomeDigitado) || carregando)">
+                        @if (carregando)
+                        {
+                            <span>Sorteando... ⏳</span>
+                        }
+                        else
+                        {
+                            <span>▶ INICIAR</span>
+                        }
+                    </button>
+                </div>
+            </div>
+            <div class="tama-buttons-row">
+                <div class="tama-btn-deco"></div>
+                <div class="tama-btn-deco red"></div>
+                <div class="tama-btn-deco"></div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="tama-device wide">
+            <div class="tama-screen wide">
+                <div class="screen-content">
+                    <div class="pixel-title small">POKETAMA</div>
+                    <p class="tama-welcome">Olá, <strong>@GameState.NomeJogador</strong>! 👾</p>
+
+                    @if (GameState.MascotesAdotados.Any(m => m.EstaCritico()))
+                    {
+                        <div class="tama-alert">⚠️ Um pokemon precisa de cuidados!</div>
+                    }
+
+                    <div class="tama-menu-grid">
+                        <div class="tama-menu-card" @onclick='() => Nav.NavigateTo("/adocao")'>
+                            <span class="menu-icon">🥚</span>
+                            <span class="menu-label">Escolher</span>
+                            <span class="menu-sub">3 Pokemons te esperam!</span>
+                        </div>
+
+                        <div class="tama-menu-card" @onclick='() => Nav.NavigateTo("/meus-mascotes")'>
+                            <span class="menu-icon">💗</span>
+                            <span class="menu-label">Pokemons</span>
+                            <span class="menu-sub">@GameState.MascotesAdotados.Count adotado(s)</span>
+                        </div>
+
+                        <div class="tama-menu-card" @onclick='() => Nav.NavigateTo("/itens")'>
+                            <span class="menu-icon">🎒</span>
+                            <span class="menu-label">Itens</span>
+                            <span class="menu-sub">Cuide do seu amigo</span>
+                        </div>
+
+                        <div class="tama-menu-card" @onclick="Ressortear">
+                            <span class="menu-icon">🎲</span>
+                            <span class="menu-label">Sortear</span>
+                            <span class="menu-sub">Novos 3 Pokemons</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tama-buttons-row">
+                <div class="tama-btn-deco"></div>
+                <div class="tama-btn-deco red"></div>
+                <div class="tama-btn-deco"></div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string nomeDigitado = "";
+    private bool   carregando   = false;
+
+    private async Task IniciarJogo()
+    {
+        if (string.IsNullOrWhiteSpace(nomeDigitado)) return;
+        carregando = true;
+        StateHasChanged();
+
+        var sorteados = await PokeService.SortearPokemonsAsync(3);
+        GameState.DefinirSorteio(sorteados);
+        GameState.NomeJogador  = nomeDigitado;
+        GameState.JogoIniciado = true;
+        carregando = false;
+    }
+
+    private async Task Ressortear()
+    {
+        var sorteados = await PokeService.SortearPokemonsAsync(3);
+        GameState.DefinirSorteio(sorteados);
+        Nav.NavigateTo("/adocao");
+    }
+}
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    .tama-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 80vh;
+        padding: 2rem;
+    }
+
+    .tama-device {
+        background: linear-gradient(145deg, #2a2a4a, #1a1a2e);
+        border-radius: 40px 40px 60px 60px;
+        padding: 2rem;
+        width: 340px;
+        box-shadow: 0 0 0 4px #e94560, 0 0 30px rgba(233,69,96,0.4), 0 20px 60px rgba(0,0,0,0.5);
+        border: 2px solid #3a3a6a;
+    }
+
+    .tama-device.wide { width: 500px; }
+
+    .tama-screen {
+        background: #0d1f12;
+        border-radius: 20px;
+        padding: 1.5rem;
+        border: 3px solid #1a3a22;
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 0 15px rgba(74,222,128,0.15);
+        min-height: 320px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .tama-screen.wide { min-height: 280px; }
+
+    .screen-content { width: 100%; text-align: center; color: #4ade80; }
+
+    .pixel-title {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 1.1rem;
+        color: #4ade80;
+        text-shadow: 0 0 10px rgba(74,222,128,0.8);
+        margin-bottom: 1rem;
+        letter-spacing: 2px;
+    }
+
+    .pixel-title.small { font-size: 0.7rem; margin-bottom: 0.5rem; }
+
+    .tama-img-welcome {
+        width: 100px;
+        height: 100px;
+        image-rendering: pixelated;
+        filter: drop-shadow(0 0 8px rgba(74,222,128,0.6));
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @@keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50%       { transform: translateY(-8px); }
+    }
+
+    .tama-text {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.55rem;
+        color: #86efac;
+        margin: 0.75rem 0;
+        line-height: 1.8;
+    }
+
+    .tama-welcome {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.55rem;
+        color: #86efac;
+        margin: 0.5rem 0 1rem;
+        line-height: 1.8;
+    }
+
+    .tama-welcome strong { color: #4ade80; }
+
+    .tama-input-area { margin: 1rem 0; text-align: left; }
+
+    .tama-input-area label {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.5rem;
+        color: #86efac;
+        display: block;
+        margin-bottom: 0.4rem;
+    }
+
+    .tama-input {
+        width: 100%;
+        background: #0a1a0d;
+        border: 2px solid #4ade80;
+        border-radius: 6px;
+        padding: 0.5rem 0.75rem;
+        color: #4ade80;
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.55rem;
+        outline: none;
+    }
+
+    .tama-input:focus { box-shadow: 0 0 8px rgba(74,222,128,0.5); }
+
+    .tama-btn-start {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.6rem;
+        background: #e94560;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        margin-top: 1rem;
+        transition: all 0.2s;
+        box-shadow: 0 4px 0 #a0293f;
+        width: 100%;
+    }
+
+    .tama-btn-start:hover:not(:disabled) {
+        background: #ff6b81;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 0 #a0293f;
+    }
+
+    .tama-btn-start:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .tama-alert {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.45rem;
+        background: #3d1a1a;
+        border: 1px solid #e94560;
+        color: #e94560;
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-bottom: 0.75rem;
+        animation: blink 1s step-end infinite;
+    }
+
+    @@keyframes blink {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0.4; }
+    }
+
+    .tama-menu-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+    }
+
+    .tama-menu-card {
+        background: #0a2a12;
+        border: 2px solid #2a6a3a;
+        border-radius: 10px;
+        padding: 0.75rem 0.5rem;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+        transition: all 0.2s;
+    }
+
+    .tama-menu-card:hover {
+        border-color: #4ade80;
+        background: #0d3318;
+        transform: scale(1.03);
+        box-shadow: 0 0 10px rgba(74,222,128,0.3);
+    }
+
+    .menu-icon  { font-size: 1.5rem; }
+
+    .menu-label {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.5rem;
+        color: #4ade80;
+    }
+
+    .menu-sub {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.35rem;
+        color: #86efac;
+        opacity: 0.8;
+        text-align: center;
+        line-height: 1.5;
+    }
+
+    .tama-buttons-row {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .tama-btn-deco {
+        width: 28px; height: 28px;
+        border-radius: 50%;
+        background: #2a2a4a;
+        border: 3px solid #3a3a6a;
+        box-shadow: 0 3px 0 #111;
+    }
+
+    .tama-btn-deco.red {
+        background: #e94560;
+        border-color: #a0293f;
+        box-shadow: 0 3px 0 #6b1a2a;
+        width: 36px; height: 36px;
+    }
+</style>

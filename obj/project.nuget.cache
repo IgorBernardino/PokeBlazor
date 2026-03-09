@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "dgSpecHash": "svUms5kZVq4=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Suzuki\\OneDrive\\Ambiente de Trabalho\\etec\\Treino\\C#\\PokeBlazor\\PokeBlazor.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Suzuki\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.3\\microsoft.aspnetcore.app.internal.assets.10.0.3.nupkg.sha512",
+    "C:\\Users\\Suzuki\\.nuget\\packages\\restsharp\\114.0.0\\restsharp.114.0.0.nupkg.sha512",
+    "C:\\Users\\Suzuki\\.nuget\\packages\\system.text.json\\10.0.3\\system.text.json.10.0.3.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1510",
+      "level": "Warning",
+      "message": "PackageReference System.Text.Json will not be pruned. Consider removing this package from your dependencies, as it is likely unnecessary.",
+      "projectPath": "C:\\Users\\Suzuki\\OneDrive\\Ambiente de Trabalho\\etec\\Treino\\C#\\PokeBlazor\\PokeBlazor.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\Suzuki\\OneDrive\\Ambiente de Trabalho\\etec\\Treino\\C#\\PokeBlazor\\PokeBlazor.csproj",
+      "libraryId": "System.Text.Json",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
+}

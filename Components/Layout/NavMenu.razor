@@ -1,0 +1,63 @@
+@rendermode InteractiveServer
+
+<nav class="tama-nav">
+    <a href="/" class="tama-logo">👾 POKETAMA</a>
+    <div class="tama-nav-links">
+        <NavLink href="/" Match="NavLinkMatch.All">🏠 Início</NavLink>
+        <NavLink href="/adocao">🥚 Escolha!</NavLink>
+        <NavLink href="/meus-mascotes">💗 Pokemons</NavLink>
+        <NavLink href="/itens">🎒 Itens</NavLink>
+    </div>
+</nav>
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    .tama-nav {
+        background: #0d1f12;
+        border-bottom: 3px solid #4ade80;
+        padding: 0.75rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 0 20px rgba(74,222,128,0.2);
+    }
+
+    .tama-logo {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.8rem;
+        color: #4ade80;
+        text-decoration: none;
+        text-shadow: 0 0 10px rgba(74,222,128,0.8);
+        letter-spacing: 2px;
+    }
+
+    .tama-nav-links {
+        display: flex;
+        gap: 1.5rem;
+    }
+
+    .tama-nav-links a {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.45rem;
+        color: #86efac;
+        text-decoration: none;
+        padding: 0.4rem 0.75rem;
+        border-radius: 6px;
+        border: 1px solid transparent;
+        transition: all 0.2s;
+    }
+
+    .tama-nav-links a:hover {
+        color: #4ade80;
+        border-color: #4ade80;
+        background: #0a2a12;
+        box-shadow: 0 0 8px rgba(74,222,128,0.3);
+    }
+
+    .tama-nav-links a.active {
+        color: #0d1f12;
+        background: #4ade80;
+        border-color: #4ade80;
+    }
+</style>
